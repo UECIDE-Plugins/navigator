@@ -1,0 +1,24 @@
+Source: navigator
+Section: plugins
+Priority: optional
+Maintainer: Matt Jenkins <matt@majenko.co.uk>
+Build-Depends: debhelper (>= 9)
+Standards-Version: 3.9.5
+
+Package: navigator
+Section: plugins
+Architecture: all
+XBSC-Group: Programming
+Description: Graphical Program Navigator
+ The Graphical Program Navigator provides a pictorial representation
+ of the entire content of the file you're currently editing.  It
+ renders a thumbnail image of the whole file in the right-hand
+ sidepane exactly as it's displayed in the editing window.  That includes
+ any error or warning highlights and syntax highlighting.  It's too small
+ to read the text, of course, but it does give you an "at a glance" view
+ of the entire sketch and where any highlights are. With a single click
+ on the rendered image you can immediately navigate to any point in the
+ file.
+
+
+

@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<project name="Navigator" default="build">
+
+    <property file="build.settings"/>
+
+    <target name="clean" description="Clean the build directories">
+        <delete dir="bin" />
+        <delete file="Navigator.jar" />
+    </target>
+
+    <target name="compile-debug" description="Compile sources">
+        <mkdir dir="bin" />
+
+        <javac srcdir="src" 
+	        destdir="bin" 
+            debug="true"
+            debuglevel="lines,vars,source"
+	        includeAntRuntime="false"
+	        classpath="${uecide.path}/uecide.jar" />
+    </target>
+   
+    <target name="compile" description="Compile sources">
+        <mkdir dir="bin" />
+
+        <javac srcdir="src" 
+	        destdir="bin" 
+	        includeAntRuntime="false"
+	        classpath="${uecide.path}/uecide.jar" />
+    </target>
+   
+    <target name="debug" depends="compile-debug" description="Build the plugin jars">
+        <jar destfile="Navigator.jar">
+            <fileset dir="bin" />
+            <manifest>
+                <attribute name="Author" value="Majenko Technologies" />
+            </manifest>
+        </jar>
+    </target>
+
+    <target name="build" depends="compile" description="Build the plugin jars">
+        <jar destfile="Navigator.jar">
+            <fileset dir="bin" />
+            <manifest>
+                <attribute name="Author" value="Majenko Technologies" />
+            </manifest>
+        </jar>
+    </target>
+</project>
