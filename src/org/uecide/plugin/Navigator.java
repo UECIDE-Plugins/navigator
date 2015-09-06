@@ -107,6 +107,11 @@ public class Navigator extends Plugin implements MouseListener {
     public ImageIcon getFileIconOverlay(File f) { return null; }
 
     JPanel previewPanel = new JPanel() {
+        @Override 
+        public Dimension getMinimumSize() {
+            return new Dimension(100, 100);
+        }
+
         @Override
         public void paintComponent(Graphics g) {
 
