@@ -1,3 +1,15 @@
+navigator (1.0.2) uecide; urgency=low
+
+  * Set minimum size
+
+ -- Matt Jenkins <matt@majenko.co.uk>  Sun, 6 Sep 2015 20:59:48 +0100
+
+navigator (1.0.1) uecide; urgency=low
+
+  * Initial Import
+
+ -- Matt Jenkins <matt@majenko.co.uk>  Sun, 6 Sep 2015 18:42:20 +0100
+
 navigator (1.0.0) uecide; urgency=low
 
   * Initial Import

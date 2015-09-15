@@ -106,74 +106,135 @@ public class Navigator extends Plugin implements MouseListener {
 
     public ImageIcon getFileIconOverlay(File f) { return null; }
 
-    JPanel previewPanel = new JPanel() {
+    JPanel previewPanel = new JPreviewPanel();
+
+    class JPreviewPanel extends JPanel {
+
+        int skipped = 0;
+        String currentText = "";
+        Rectangle currentViewRect = null;
+
+        BufferedImage renderedImage = null;
+        BufferedImage imageData = null;
+        Component target = null;
+        Timer updateTicker = new Timer();
+
+        public JPreviewPanel() {
+            super();
+            updateTicker.scheduleAtFixedRate(new TimerTask() {
+                public void run() {
+                    updateImage();
+                }
+            }, 100, 100);
+        }
+
         @Override 
         public Dimension getMinimumSize() {
             return new Dimension(100, 100);
         }
 
-        @Override
-        public void paintComponent(Graphics g) {
+        EditorBase sel = null;
+
+        public void updateImage() {
+            int w = getWidth();
+            int h = getHeight();
+            if (w <= 0 || h <= 0) {
+                return;
+            }
+
 
             if (editor == null) {
-                super.paintComponent(g);
                 return;
             }
 
-            EditorBase sel = editor.getSelectedEditor();
+            sel = editor.getSelectedEditor();
             if (sel == null) {
-                super.paintComponent(g);
                 return;
             }
 
-            Component c = sel.getContentPane();
-
-            if (c == null) {
-                super.paintComponent(g);
-                return;
-            }
-
-            Graphics2D g2d = (Graphics2D) g;
-
-            g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-
-            int w = c.getWidth();
-            int h = c.getHeight();
-
-            if (w == 0) { // Split closed
-                super.paintComponent(g);
-                return;
+            boolean changed = false;
+            String newText = sel.getText();
+            if (!newText.equals(currentText)) {
+                changed = true;
+                currentText = newText;
             }
 
             Rectangle bounds = sel.getViewRect();
+            if (currentViewRect != null && 
+                currentViewRect.y == bounds.y && 
+                currentViewRect.height == bounds.height && !changed && (skipped < 10)) {
+                skipped++;
+                return;
+            }
+            currentViewRect = bounds;
+            skipped = 0;
 
-            BufferedImage im = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
-            c.paint(im.getGraphics());
+            target = sel.getContentPane();
+            if (target == null) {
+                return;
+            }
+            int tw = target.getWidth();
+            int th = target.getHeight();
 
-            Graphics2D workBuffer = (Graphics2D)im.getGraphics();
-            workBuffer.setPaint(new Color(0, 0, 0, 0.1f));
-            workBuffer.fillRect(0, 0, im.getWidth(), bounds.y);
-            workBuffer.fillRect(0, bounds.y + bounds.height, im.getWidth(), im.getHeight() - (bounds.y + bounds.height));
+            if (tw <= 0 || th <= 0) {
+                return;
+            }
 
-            workBuffer.setPaint(new Color(1, 1, 1, 0.2f));
-            workBuffer.fillRect(0, bounds.y, im.getWidth(), bounds.height);
-            
+            if (renderedImage == null || renderedImage.getWidth() != w || renderedImage.getHeight() != h) {
+                renderedImage = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+            }
 
-            g2d.drawImage(im, 0, 0, getWidth(), getHeight(), null);
+            if (imageData == null || imageData.getWidth() != tw || imageData.getHeight() != h) {
+                imageData = new BufferedImage(tw, th, BufferedImage.TYPE_INT_ARGB);
+            }
+
+
+            try {
+                // Paint the target into a temporary work buffer image
+                SwingUtilities.invokeAndWait(new Runnable() {
+                    public void run() {
+                        Graphics2D workBuffer = (Graphics2D)imageData.getGraphics();
+                        target.paint(workBuffer);
+                    }
+                });
+            } catch (Exception e) {
+                return;
+            }
+
+            Graphics2D mainImage = (Graphics2D)renderedImage.getGraphics();
+
+            mainImage.drawImage(imageData, 0, 0, w, h, null);
+
+            float toppct = (float)bounds.y / (float)th;
+            float botpct = ((float)bounds.y + (float)bounds.height) / (float)th;
+
+            int toppos = (int)((float)h * toppct);
+            int botpos = (int)((float)h * botpct);
+
+            mainImage.setPaint(new Color(0, 0, 0, 0.1f));
+            mainImage.fillRect(0, 0, w, toppos);
+            mainImage.fillRect(0, botpos, w, h - botpos);
+
+            mainImage.setPaint(new Color(1, 1, 1, 0.2f));
+            mainImage.fillRect(0, toppos, w, botpos - toppos);
+
+            repaint();
+        }
+
+        @Override
+        public void paintComponent(Graphics g) {
+            if (renderedImage == null) {
+                super.paintComponent(g);
+                return;
+            }
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.drawImage(renderedImage, 0, 0, null);
         }
     };
-
-    Timer trigger = new Timer();
 
     public void addPanelsToTabs(JTabbedPane tabs, int flags) {
         if (flags == Plugin.TABS_SIDEBAR) {
             tabs.add(previewPanel, "Navigator");
-            trigger.scheduleAtFixedRate(new TimerTask() {
-                public void run() {
-                    previewPanel.repaint();
-                }
-            }, 100, 100);
-
             previewPanel.addMouseListener(this);
         }
     }
@@ -219,6 +280,7 @@ public class Navigator extends Plugin implements MouseListener {
         }
 
         sel.setViewPosition(new Point(0, showPos));
+        previewPanel.repaint();
     }
 }
 
